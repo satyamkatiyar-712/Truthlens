@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom"; // NAYA ADD KIYA
+import toast from "react-hot-toast"; // NAYA ADD KIYA
+
 import { IoIosClose } from "react-icons/io";
 import { LuFilePen } from "react-icons/lu";
 import { HiDotsVertical } from "react-icons/hi";
@@ -8,11 +11,16 @@ import { LuPen } from "react-icons/lu";
 import { AiOutlineDelete } from "react-icons/ai";
 import { TbPinned } from "react-icons/tb";
 import { RiUnpinFill } from "react-icons/ri";
+import { FiLogOut, FiSettings, FiUser } from "react-icons/fi"; // NAYE ICONS
 
 const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistoryId, refreshTrigger }) => {
   const [claimsArray, setClaimsArray] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // NAYA: User data state
+  const [userData, setUserData] = useState({ name: "Loading...", email: "" });
+  const navigate = useNavigate();
 
   // Menu Dropdown states
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -26,12 +34,20 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   const [renameText, setRenameText] = useState("");
   const [renameItemId, setRenameItemId] = useState(null);
 
-  // Outside click handle karne ka logic (Dropdown ke liye)
+  // NAYA: Profile Popup state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Outside click handle karne ka logic (Dropdown aur Profile Popup dono ke liye)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setActiveMenuId(null);
         setMenuButtonRect(null);
+      }
+      // NAYA: Profile menu outside click
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -63,6 +79,25 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     }
   }, [activeMenuId, menuButtonRect, finalMenuCoords]);
 
+  // NAYA: User Profile fetch logic
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/user/profile", {
+          method: "GET",
+          credentials: "include", // JWT cookies bhejne ke liye zaroori
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUserData({ name: data.user.name, email: data.user.email });
+        }
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      }
+    };
+    fetchUserProfile();
+  }, []);
+
   // History fetch logic
   useEffect(() => {
     const fetchHistory = async () => {
@@ -90,10 +125,8 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     fetchHistory();
   }, [refreshTrigger]);
 
-
-  
   const handleDelete = async (id) => {
-    setActiveMenuId(null); // Menu band karo
+    setActiveMenuId(null); 
     try {
       const response = await fetch(`http://localhost:3000/api/user/claim/delete/${id}`, {
         method: "DELETE",
@@ -102,7 +135,6 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       
       if (data.success) {
         setClaimsArray((prev) => prev.filter((item) => item._id !== id));
-        
         if (selectedHistoryId === id) {
           onNewChat();
         }
@@ -115,18 +147,16 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     }
   };
 
-  // 2. Open Rename Modal
   const openRenameModal = (id) => {
     const item = claimsArray.find((c) => c._id === id);
     if (item) {
       setRenameText(item.userClaim || "");
       setRenameItemId(id);
-      setActiveMenuId(null); // Menu band karo
-      setIsRenameModalOpen(true); // Modal kholo
+      setActiveMenuId(null); 
+      setIsRenameModalOpen(true); 
     }
   };
 
-  // 3. Submit Rename
   const handleRenameSubmit = async () => {
     if (!renameText.trim()) return alert("Naam khali nahi chhod sakte!");
     
@@ -139,20 +169,16 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       const data = await response.json();
 
       if (data.success) {
-        // UI Update karo
         setClaimsArray((prev) =>
           prev.map((item) =>
             item._id === renameItemId ? { ...item, userClaim: renameText } : item
           )
         );
-        
-        // Agar yahi history focus mein hai, toh parent component ko bhi updated data bhej do
         if (selectedHistoryId === renameItemId) {
           const updatedItem = claimsArray.find(c => c._id === renameItemId);
           onSelectHistory({ ...updatedItem, userClaim: renameText });
         }
-        
-        setIsRenameModalOpen(false); // Modal band
+        setIsRenameModalOpen(false); 
       } else {
         alert(data.message || "Rename fail ho gaya.");
       }
@@ -162,9 +188,8 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     }
   };
 
-  // 4. Pin/Unpin Handler (NAYA ADD KIYA HAI)
   const handlePinToggle = async (id) => {
-    setActiveMenuId(null); // Menu band karo
+    setActiveMenuId(null); 
     try {
       const response = await fetch(`http://localhost:3000/api/user/claim/pin/${id}`, {
         method: "PUT",
@@ -176,8 +201,6 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
           const updatedArray = prev.map((item) =>
             item._id === id ? { ...item, isPinned: data.isPinned } : item
           );
-          
-          // Sort logic: Pinned items upar aa jayenge turant
           return updatedArray.sort((a, b) => {
             if (a.isPinned === b.isPinned) return 0;
             return a.isPinned ? -1 : 1;
@@ -192,13 +215,41 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     }
   };
 
+  // NAYA: Logout Handler
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/user/logout", {
+        method: "POST", 
+        credentials: "include",
+      });
+      const data = await res.json();
+      
+      if(data.success) {
+        localStorage.removeItem("isAuthenticated");
+        toast.success("Successfully logged out!");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Logout failed!");
+    }
+  };
+
+  // NAYA: Helper for Initials (e.g., Satyam Katiyar -> SK)
+  const getInitials = (name) => {
+    if (!name || name === "Loading...") return "U";
+    const parts = name.split(" ");
+    if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  };
+
   // =====================
   // UI RENDERING
   // =====================
 
   if (loading) {
     return (
-      <div className="w-64 md:w-72 h-screen bg-[#0B1120] border-r border-slate-800/60 flex flex-col shrink-0 items-center justify-center">
+      <div className="w-64 md:w-72 h-screen bg-[#272829] border-r border-slate-800/60 flex flex-col shrink-0 items-center justify-center">
         <div className="w-5 h-5 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin mb-3"></div>
         <p className="text-xs font-semibold animate-pulse text-slate-500 uppercase tracking-wider">
           Loading History...
@@ -209,7 +260,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
 
   if (error) {
     return (
-      <div className="w-64 md:w-72 h-screen bg-[#0B1120] border-r border-slate-800/60 flex flex-col shrink-0 p-6 text-center justify-center text-red-400">
+      <div className="w-64 md:w-72 h-screen bg-[#272829] border-r border-slate-800/60 flex flex-col shrink-0 p-6 text-center justify-center text-red-400">
         <span className="text-2xl mb-2">⚠️</span>
         <p className="text-sm">{error}</p>
       </div>
@@ -217,7 +268,8 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   }
 
   return (
-    <div className="w-64 md:w-72 h-screen bg-[#0B1120] border-r border-slate-800/60 md:flex flex-col shrink-0 transition-all duration-300 relative">
+    // THODA SA FIX: `h-[100dvh]` aur `flex flex-col` add kiya taaki profile hamesha neeche chipki rahe
+    <div className="w-64 md:w-72 h-dvh bg-[#202122] border-r border-white/10 flex flex-col shrink-0 transition-all duration-300 relative">
       <div className="p-4">
         <div className="flex justify-between">
           <h1 className="text-xl font-bold text-slate-200 mb-6 px-2 tracking-wide">
@@ -232,7 +284,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
             onNewChat();
             setActiveMenuId(null);
           }}
-          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-xl transition duration-400 border border-slate-700 hover:border-slate-600 shadow-sm"
+          className="w-full flex items-center justify-between px-2 py-2.5  text-white text-sm font-medium rounded-xl hover:bg-[#303132]"
         >
           <span className="flex items-center gap-2">
             <span className="text-lg leading-none">
@@ -244,13 +296,13 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-2 custom-scrollbar">
-        <div className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase tracking-wider">
-          Recent History
+        <div className="text-sm font-semibold text-[#a7a8aa] mb-3 px-3 tracking-wider">
+          Recents
         </div>
 
         <div className="flex flex-col gap-1">
           {claimsArray.length === 0 ? (
-            <div className="text-center py-10 px-4 text-slate-500 text-sm">
+            <div className="text-center py-10 px-4 text-white text-sm">
               <span className="text-2xl block mb-2 opacity-50">📭</span>
               No chat history found. Start a new conversation!
             </div>
@@ -260,15 +312,14 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
               return (
                 <div
                   key={item._id || Math.random()}
-                  className={`group flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition duration-200 text-left cursor-pointer ${
-                    isSelected ? "bg-slate-700 shadow-inner" : "hover:bg-slate-800/60"
+                  className={`group flex items-center gap-3 w-full px-3 py-2.5 rounded-2xl transition duration-200 text-left cursor-pointer ${
+                    isSelected ? "bg-[#121313] shadow-inner" : "hover:bg-[#303132]"
                   }`}
                   onClick={() => {
                     onSelectHistory(item);
                     setActiveMenuId(null);
                   }}
                 >
-                  {/* YAHAN PIN ICON ADD KIYA HAI */}
                   <div className="flex-1 truncate text-white text-sm font-medium group-hover:text-slate-100 transition-colors flex items-center gap-2 capitalize">
                     {item.isPinned && <TbPinned className="text-white shrink-0" size={16} />}
                     <span className="truncate">{item.userClaim || "Unknown Search"}</span>
@@ -308,19 +359,17 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
               dropdownRef.current = node;
             }}
             style={{ top: finalMenuCoords.top, left: finalMenuCoords.left, position: "fixed" }}
-            className="fixed bg-[#202638] w-36 rounded-2xl py-2 px-3 z-50 shadow-2xl border border-slate-700"
+            className="fixed bg-[#303131] w-36 rounded-2xl py-2 px-3 z-50 shadow-2xl"
           >
-            {/* PIN CLICK LOGIC ADDED HERE */}
             <div 
               onClick={() => handlePinToggle(activeMenuId)}
-              className="flex justify-start items-center gap-2 mb-2 cursor-pointer hover:bg-slate-700 p-1.5 rounded-md transition-colors"
+              className="flex justify-start items-center gap-2 mb-2 cursor-pointer  p-1.5 rounded-md transition-colors"
             >
               <span>{claimsArray.find(c => c._id === activeMenuId)?.isPinned ?(<RiUnpinFill className="text-white" size={16} />):(<BsPinAngle className="text-white" size={16}/>)}</span>
               <h2 className="text-white text-sm capitalize">
                 {claimsArray.find(c => c._id === activeMenuId)?.isPinned ? "unpin" : "pin"}
               </h2>
             </div>
-            {/* RENAME CLICK LOGIC */}
             <div 
               onClick={() => openRenameModal(activeMenuId)}
               className="flex justify-start items-center gap-2 mb-2 cursor-pointer hover:bg-slate-700 p-1.5 rounded-md transition-colors"
@@ -328,12 +377,11 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
               <span><LuPen className="text-white" size={16} /></span>
               <h2 className="text-white text-sm capitalize">rename</h2>
             </div>
-            {/* DELETE CLICK LOGIC */}
             <div 
               onClick={() => handleDelete(activeMenuId)}
-              className="flex justify-start items-center gap-2 cursor-pointer hover:bg-red-500/20 hover:text-red-400 p-1.5 rounded-md transition-colors"
+              className="flex justify-start items-center gap-2 cursor-pointer p-1.5 rounded-md transition-colors"
             >
-              <span><AiOutlineDelete className="text-white hover:text-red-400" size={16} /></span>
+              <span><AiOutlineDelete className="text-white" size={16} /></span>
               <h2 className="text-white text-sm capitalize">delete</h2>
             </div>
           </div>,
@@ -344,7 +392,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       {isRenameModalOpen &&
         createPortal(
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center">
-            <div className="bg-[#1A2234] border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all">
+            <div className="bg-[#202122] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all">
               <h2 className="text-white text-lg font-bold mb-4">Rename Chat</h2>
               <input
                 type="text"
@@ -354,7 +402,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleRenameSubmit();
                 }}
-                className="w-full bg-[#0B1120] border border-slate-600 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-white transition-colors"
+                className="w-full bg-[#161717] border text-white rounded-lg px-4 py-2 focus:outline-none focus:border-white transition-colors"
                 placeholder="Enter new name..."
               />
               <div className="flex justify-end gap-3 mt-6">
@@ -376,25 +424,66 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
           document.body
         )}
 
-      {/* USER PROFILE BOTTOM */}
-      <div className="p-4 border-t border-slate-800/60">
-        <button className="flex items-center gap-3 w-full p-2 hover:bg-slate-800/60 rounded-lg transition duration-200">
-          <div className="w-8 h-8 rounded-full bg-linear-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-            SK
+      {/* ================================== */}
+      {/* NAYA USER PROFILE & POPUP SECTION */}
+      {/* ================================== */}
+      <div className="relative p-4 border-t border-slate-800/60" ref={profileRef}>
+        
+        {/* Profile Popup Menu */}
+        {isProfileOpen && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-[#383838] rounded-2xl shadow-2xl overflow-hidden z-50">
+            {/* Header (Photo, Name, Email fetched from DB) */}
+            <div className="p-4 border-b border-slate-700 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#111010] flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
+                {getInitials(userData.name)}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <h3 className="text-white font-semibold truncate capitalize">{userData.name}</h3>
+                <p className="text-slate-400 text-xs truncate">{userData.email}</p>
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="p-2 space-y-1">
+              <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-[#262728] rounded-lg text-sm transition-colors">
+                <FiUser size={16} /> My Account
+              </button>
+              <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-[#262728] rounded-lg text-sm transition-colors">
+                <FiSettings size={16} /> Settings
+              </button>
+              <div className="h-px bg-slate-700 my-1 mx-2"></div>
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-[#262728] rounded-lg text-sm transition-colors font-medium"
+              >
+                <FiLogOut size={16} /> Log out
+              </button>
+            </div>
           </div>
-          <div className="flex-1 text-left">
-            <div className="text-slate-200 text-sm font-medium truncate">
-              Satyam Katiyar
+        )}
+
+        {/* Bottom Clickable Profile Button (Data fetched from DB) */}
+        <button 
+          onClick={() => setIsProfileOpen(!isProfileOpen)}
+          className={`flex items-center gap-3 w-full p-2 rounded-lg transition duration-200 ${isProfileOpen ? "bg-[#202122]" : "bg-[#121313]"}`}
+        >
+          <div className="w-8 h-8 rounded-full bg-[#313131] flex items-center justify-center text-white font-bold text-xs shadow-md shrink-0">
+            {getInitials(userData.name)}
+          </div>
+          <div className="flex-1 text-left overflow-hidden">
+            <div className="text-slate-200 text-sm font-medium truncate capitalize">
+              {userData.name}
             </div>
             <div className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">
               Pro Plan
             </div>
           </div>
-          <span className="text-slate-500 hover:text-slate-300 transition-colors">
-            ⚙️
+          <span className="text-slate-500 transition-colors">
+            <HiDotsVertical size={16} />
           </span>
         </button>
       </div>
+
     </div>
   );
 };

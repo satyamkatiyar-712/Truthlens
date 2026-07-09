@@ -143,7 +143,7 @@ const Wholerightsec = ({selectedHistoryItem,resetSignal,onSearchSuccess}) => {
         </div>
       </div>
 
-      <div className="shrink-0 p-4 bg-linear-to-t from-[#0F172A] via-[#0F172A] to-transparent">
+      <div className="shrink-0 p-4 bg-linear-to-t from-[#2f2f2f] via-[#161616] to-transparent">
         <div className="max-w-3xl mx-auto">
           <Searchbox
             onReceiveData={setResultData}

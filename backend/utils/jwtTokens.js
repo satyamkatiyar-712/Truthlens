@@ -1,0 +1,15 @@
+import jwt from 'jsonwebtoken'
+export const accessToken=(user)=>{
+    return jwt.sign(
+        {userId:user._id},
+        process.env.ACCESS_TOKEN_KEY,
+        {expiresIn:"15m"}
+    )
+}
+export const refreshToken=(user)=>{
+    return jwt.sign(
+        {userId:user._id},
+        process.env.REFRESH_TOKEN_KEY,
+        {expiresIn:"7d"}
+    ) 
+}
