@@ -14,7 +14,7 @@ const ClaimSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0,
-    max: 100
+    max: 100 
   },
   explanation: {
     type: String,
@@ -24,6 +24,11 @@ const ClaimSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "USER", // Ye naam tere User model ke naam se exactly match hona chahiye (jaise tune export const USER = mongoose.model("USER", ...))
+        required: true,
+    },
   sources: [
     {
       name: String,

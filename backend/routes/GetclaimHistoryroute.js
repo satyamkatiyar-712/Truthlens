@@ -3,12 +3,14 @@ import { FindtheClaims } from '../controllers/FetchClaimHistory.js'
 import { DeleteHistory } from '../controllers/Aiconnection.js'
 import { UpdateHistory } from '../controllers/Aiconnection.js'
 import { TogglePinHistory } from '../controllers/Aiconnection.js'
+import { authHandlerMiddleware } from '../middleware/authHandler.js'
+
 const router = express.Router()
 
-router.get("/user/claims",FindtheClaims)
-router.delete("/user/claim/delete/:id",DeleteHistory)
-router.put("/user/claim/update/:id",UpdateHistory)
-router.put("/user/claim/pin/:id", TogglePinHistory);
+router.get("/user/claims",authHandlerMiddleware,FindtheClaims)
+router.delete("/user/claim/delete/:id",authHandlerMiddleware,DeleteHistory)
+router.put("/user/claim/update/:id",authHandlerMiddleware,UpdateHistory)
+router.put("/user/claim/pin/:id",authHandlerMiddleware,TogglePinHistory);
 
 
-export default router
+export default router 

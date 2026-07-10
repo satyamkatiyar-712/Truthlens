@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../axiosConfig";
 import toast from "react-hot-toast";
 import { Loader2, Sparkles, Mic, UploadCloud, Link as LinkIcon, Play, Camera, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -16,9 +16,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/api/user/signin", formData, {
-        withCredentials: true,
-      });
+      const response = await api.post("http://localhost:3000/api/user/signin", formData);
       if (response.data.success) {
         toast.success("Welcome back! 🚀");
         localStorage.setItem("isAuthenticated", "true");
@@ -172,9 +170,9 @@ const Login = () => {
                 </div>
 
                 <div className="flex justify-end pt-1 pb-1">
-                  <a href="#" className="text-[11px] text-gray-500 hover:text-white transition-colors">
+                  <Link to="/forgot-password" className="text-[11px] text-gray-500 hover:text-white transition-colors">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
 
                 <button

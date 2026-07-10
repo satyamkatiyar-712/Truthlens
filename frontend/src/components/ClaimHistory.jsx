@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom"; // NAYA ADD KIYA
-import toast from "react-hot-toast"; // NAYA ADD KIYA
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import api from "../axiosConfig";
 
 import { IoIosClose } from "react-icons/io";
 import { LuFilePen } from "react-icons/lu";
@@ -11,41 +12,35 @@ import { LuPen } from "react-icons/lu";
 import { AiOutlineDelete } from "react-icons/ai";
 import { TbPinned } from "react-icons/tb";
 import { RiUnpinFill } from "react-icons/ri";
-import { FiLogOut, FiSettings, FiUser } from "react-icons/fi"; // NAYE ICONS
+import { FiLogOut, FiSettings, FiUser } from "react-icons/fi";
 
 const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistoryId, refreshTrigger }) => {
   const [claimsArray, setClaimsArray] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // NAYA: User data state
   const [userData, setUserData] = useState({ name: "Loading...", email: "" });
   const navigate = useNavigate();
 
-  // Menu Dropdown states
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [menuButtonRect, setMenuButtonRect] = useState(null);
   const [finalMenuCoords, setFinalMenuCoords] = useState({ top: 0, left: 0 });
   const menuRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Rename Modal states
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renameText, setRenameText] = useState("");
   const [renameItemId, setRenameItemId] = useState(null);
 
-  // NAYA: Profile Popup state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
-  // Outside click handle karne ka logic (Dropdown aur Profile Popup dono ke liye)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setActiveMenuId(null);
         setMenuButtonRect(null);
       }
-      // NAYA: Profile menu outside click
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
@@ -56,7 +51,6 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     };
   }, []);
 
-  // Dropdown position calculate
   useLayoutEffect(() => {
     if (activeMenuId && dropdownRef.current && menuButtonRect) {
       const dropdownHeight = dropdownRef.current.offsetHeight;
@@ -79,15 +73,12 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     }
   }, [activeMenuId, menuButtonRect, finalMenuCoords]);
 
-  // NAYA: User Profile fetch logic
+  // User Profile fetch logic with Axios
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/user/profile", {
-          method: "GET",
-          credentials: "include", // JWT cookies bhejne ke liye zaroori
-        });
-        const data = await res.json();
+        const res = await api.get("http://localhost:3000/api/user/profile");
+        const data = res.data;
         if (data.success && data.user) {
           setUserData({ name: data.user.name, email: data.user.email });
         }
@@ -98,17 +89,13 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     fetchUserProfile();
   }, []);
 
-  // History fetch logic
+  // History fetch logic with Axios
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const result = await fetch("http://localhost:3000/api/user/claims", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const historyData = await result.json();
+        const result = await api.get("http://localhost:3000/api/user/claims");
+        const historyData = result.data;
         
-        // Data aate hi Pinned items ko upar sort kar rahe hain
         const sortedData = (historyData.data || []).sort((a, b) => {
           if (a.isPinned === b.isPinned) return 0;
           return a.isPinned ? -1 : 1;
@@ -128,10 +115,8 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   const handleDelete = async (id) => {
     setActiveMenuId(null); 
     try {
-      const response = await fetch(`http://localhost:3000/api/user/claim/delete/${id}`, {
-        method: "DELETE",
-      });
-      const data = await response.json();
+      const response = await api.delete(`http://localhost:3000/api/user/claim/delete/${id}`);
+      const data = response.data;
       
       if (data.success) {
         setClaimsArray((prev) => prev.filter((item) => item._id !== id));
@@ -143,7 +128,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       }
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Server error during delete.");
+      alert(error.response?.data?.message || "Server error during delete.");
     }
   };
 
@@ -161,12 +146,10 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     if (!renameText.trim()) return alert("Naam khali nahi chhod sakte!");
     
     try {
-      const response = await fetch(`http://localhost:3000/api/user/claim/update/${renameItemId}`, {
-        method: "PUT", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userClaim: renameText }),
-      });
-      const data = await response.json();
+      const response = await api.put(`http://localhost:3000/api/user/claim/update/${renameItemId}`, 
+        { userClaim: renameText }
+      );
+      const data = response.data;
 
       if (data.success) {
         setClaimsArray((prev) =>
@@ -184,17 +167,17 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       }
     } catch (error) {
       console.error("Rename error:", error);
-      alert("Server error during rename.");
+      alert(error.response?.data?.message || "Server error during rename.");
     }
   };
 
   const handlePinToggle = async (id) => {
     setActiveMenuId(null); 
     try {
-      const response = await fetch(`http://localhost:3000/api/user/claim/pin/${id}`, {
-        method: "PUT",
-      });
-      const data = await response.json();
+      const response = await api.put(`http://localhost:3000/api/user/claim/pin/${id}`, 
+        {}, // Empty body
+      );
+      const data = response.data;
 
       if (data.success) {
         setClaimsArray((prev) => {
@@ -211,18 +194,16 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       }
     } catch (error) {
       console.error("Pin error:", error);
-      alert("Server error during pin toggle.");
+      alert(error.response?.data?.message || "Server error during pin toggle.");
     }
   };
 
-  // NAYA: Logout Handler
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/logout", {
-        method: "POST", 
-        credentials: "include",
-      });
-      const data = await res.json();
+      const res = await api.post("http://localhost:3000/api/user/logout", 
+        {}
+      );
+      const data = res.data;
       
       if(data.success) {
         localStorage.removeItem("isAuthenticated");
@@ -231,21 +212,16 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
       }
     } catch (error) {
       console.log(error);
-      toast.error("Logout failed!");
+      toast.error(error.response?.data?.message || "Logout failed!");
     }
   };
 
-  // NAYA: Helper for Initials (e.g., Satyam Katiyar -> SK)
   const getInitials = (name) => {
     if (!name || name === "Loading...") return "U";
     const parts = name.split(" ");
     if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.substring(0, 2).toUpperCase();
   };
-
-  // =====================
-  // UI RENDERING
-  // =====================
 
   if (loading) {
     return (
@@ -268,7 +244,6 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   }
 
   return (
-    // THODA SA FIX: `h-[100dvh]` aur `flex flex-col` add kiya taaki profile hamesha neeche chipki rahe
     <div className="w-64 md:w-72 h-dvh bg-[#202122] border-r border-white/10 flex flex-col shrink-0 transition-all duration-300 relative">
       <div className="p-4">
         <div className="flex justify-between">

@@ -5,6 +5,7 @@ import { IoSendSharp } from "react-icons/io5";
 import { RxCross2 } from "react-icons/rx";
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import 'regenerator-runtime/runtime';
+import api from "../axiosConfig";
 
 const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearchSuccess }) => {
   const [claim, setClaim] = useState("");
@@ -89,12 +90,9 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/user/verify", {
-        method: "POST",
-        body: formdata,
-      });
+     const response = await api.post("http://localhost:3000/api/user/verify", formdata);
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         onReceiveData(data.data);
@@ -105,8 +103,12 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
       }
     } catch (error) {
       console.error("Error:", error);
-      // Toast 3: Proper network error message
-      toast.error("Network error. Please check your connection.");
+      
+      if (error.response && error.response.data) {
+        toast.error(error.response.data.message || "Server Error!");
+      } else {
+        toast.error("Network error. Please check if backend is running.");
+      }
     } finally {
       setLoading(false);
     }

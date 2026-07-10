@@ -5,7 +5,7 @@ export const authHandlerMiddleware = async (req, res, next) => {
     const token = req.cookies?.accessToken;
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Unauthorized: Please login first" });
+      return res.status(401).json({ success: false, message: "Unauthorized: Please login first" ,code: "NO_TOKEN" });
     }
 
     let payload;
@@ -13,7 +13,7 @@ export const authHandlerMiddleware = async (req, res, next) => {
     try {
       payload = jwt.verify(token, process.env.ACCESS_TOKEN_KEY);
     } catch (error) {
-      return res.status(401).json({ success: false, message: "Invalid or Expired token" });
+      return res.status(401).json({ success: false, message: "Invalid or Expired token", code: "TOKEN_EXPIRED" });
     }
 
     req.user = payload;

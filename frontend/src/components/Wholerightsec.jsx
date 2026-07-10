@@ -2,8 +2,6 @@ import Searchbox from "./Searchbox";
 import ResultCard from "./ResultEXplanation";
 import { useState ,useEffect } from "react";
 
-
-
 const Wholerightsec = ({selectedHistoryItem,resetSignal,onSearchSuccess}) => {
   const [loading, setLoading] = useState(false)
   const [resultData, setResultData] = useState(null)

@@ -7,9 +7,30 @@ import { ProcessVideoLink } from "./vedioController.js";
 
 export const ConnectingAi = async (req, res) => {
   try {
-
+     const userId= req.user.userId;
     if (req.body.inputType === "videoUrl") {
-      return await ProcessVideoLink(req, res);
+      const videoResult = await ProcessVideoLink(req);
+
+       if (videoResult.error) {
+        return res.status(videoResult.status).json({
+           success: false,
+           message: videoResult.message 
+        });
+      }
+
+      const SavedFact = await Factcheck.create({
+        userClaim: req.body.claim, 
+        verdict: videoResult.finalVerdict.verdict,
+        confidenceScore: videoResult.finalVerdict.confidenceScore,
+        explanation: videoResult.finalVerdict.explanation,
+        sources: videoResult.finalVerdict.sources,
+        user: userId 
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: videoResult.finalVerdict
+      })
     }
 
     let Finalclaim = req.body.claim || "";
@@ -134,6 +155,7 @@ export const ConnectingAi = async (req, res) => {
         verdict: "Chat",
         confidenceScore: 100,
         explanation: chatAnswer,
+        user:userId,
         sources: [],
       });
       console.log("Saved history :", SavedFact._id);
@@ -144,6 +166,7 @@ export const ConnectingAi = async (req, res) => {
           verdict: "Chat",
           confidenceScore: 100,
           explanation: chatAnswer,
+          user:userId,
           sources: [],
         },
       });
@@ -154,6 +177,7 @@ export const ConnectingAi = async (req, res) => {
         verdict: finallmResponse.verdict,
         confidenceScore: finallmResponse.confidenceScore,
         explanation: finallmResponse.explanation,
+        user:userId,
         sources: finallmResponse.sources,
       });
 
@@ -177,7 +201,8 @@ export const ConnectingAi = async (req, res) => {
 export const DeleteHistory = async (req, res) => {
   try {
     const id = req.params.id;
-    const deletedclaim = await Factcheck.findByIdAndDelete(id);
+    const userId= req.user.userId;
+    const deletedclaim = await Factcheck.findOneAndDelete({_id:id,user:userId});
 
     if (!deletedclaim) {
       return res.status(404).json({
@@ -204,6 +229,7 @@ export const DeleteHistory = async (req, res) => {
 export const UpdateHistory = async (req, res) => {
   try {
     const id = req.params.id;
+    const userId = req.user.userId;
     const newClaimName = req.body.userClaim;
 
     if (!newClaimName) {
@@ -213,7 +239,10 @@ export const UpdateHistory = async (req, res) => {
       });
     }
 
-    const updatedclaim = await Factcheck.findByIdAndUpdate(id,{userClaim:newClaimName},{new:true});
+    const updatedclaim = await Factcheck.findOneAndUpdate({ _id: id, user: userId },
+       {userClaim:newClaimName},
+       {new:true}
+    )
 
     if (!updatedclaim) {
       return res.status(404).json({
@@ -241,9 +270,10 @@ export const UpdateHistory = async (req, res) => {
 export const TogglePinHistory = async (req, res) => {
   try {
     const id = req.params.id;
+    const userId = req.user.userId;
     
     // Pehle document find karo
-    const claim = await Factcheck.findById(id);
+    const claim = await Factcheck.findOne({_id:id , user:userId});
     if (!claim) {
       return res.status(404).json({ success: false, message: "History item not found" });
     }

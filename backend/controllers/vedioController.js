@@ -17,21 +17,18 @@ export const ProcessVideoLink = async (req, res) => {
         const mode = req.body.mode;
 
         if (mode === "chat") {
-            return res.status(400).json({ success: false, message: "Vedio verification can not be done in fast mode" });
+            return { error: true, status: 400, message: "Video verification can not be done in fast mode" };
         }
 
 
         if (!videoUrl) {
-            return res.status(400).json({ success: false, message: "First attach or provide a vedio link" });
+            return { error: true, status: 400, message: "First attach or provide a video link" };
         }
 
         const isValidLink = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be|instagram\.com)\/.+$/.test(videoUrl.trim());
 
         if (!isValidLink) {
-            return res.status(400).json({
-                success: false,
-                message: "Paste valid links for veification."
-            });
+           return { error: true, status: 400, message: "Paste valid links for verification." };
         }
 
         try {
@@ -43,10 +40,7 @@ export const ProcessVideoLink = async (req, res) => {
             console.log(`Video length is: ${durationInSeconds} seconds`);
 
             if (durationInSeconds > 120) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Size of the vedio should be less than 2 minutes"
-                });
+                return { error: true, status: 400, message: "Size of the video should be less than 2 minutes" };
             }
         } catch (metadataError) {
             throw metadataError;
@@ -84,7 +78,7 @@ export const ProcessVideoLink = async (req, res) => {
         fs.unlinkSync(tempFilePath);
 
         if (!transcriptText || transcriptText.trim().length === 0) {
-            return res.status(400).json({ success: false, message: "Video mein koi awaaz ya words nahi mile." });
+            return { error: true, status: 400, message: "Video mein koi awaaz ya words nahi mile." };
         }
 
         // 5. Core Engine ko bhej do fact-check ke liye
@@ -97,17 +91,17 @@ export const ProcessVideoLink = async (req, res) => {
         }
 
 
-        return res.status(200).json({
+        return {
             success: true,
             transcript: transcriptText,
-            data: finalVerdict
-        });
+            finalVerdict: finalVerdict
+        }
 
     } catch (error) {
         console.error("Video Processing Error Details:", error.message || error);
 
-        // Temp file clean karne ka backup agar process crash ho jaye beech mein
-        const tempFilePath = path.join(process.cwd(), "temp"); // exact file path track karna mushkil hai catch me bina global variable ke, par OS apne aap temp clean kar deta hai mostly. Agar tu chahe toh req ke shuru mein file path define kar sakta hai.
+       
+        const tempFilePath = path.join(process.cwd(), "temp"); 
 
         // ERROR DETECTION LOGIC
         const errorString = (error.message || error.stderr || "").toLowerCase();
@@ -118,23 +112,14 @@ export const ProcessVideoLink = async (req, res) => {
             errorString.includes("sign in") ||
             errorString.includes("members only")
         ) {
-            return res.status(400).json({
-                success: false,
-                message: "The vedio is private i can not access it."
-            });
+           return { error: true, status: 400, message: "The video is private I can not access it." };
         }
 
         if (errorString.includes("video unavailable") || errorString.includes("not found")) {
-            return res.status(404).json({
-                success: false,
-                message: "The media does not exist anymore."
-            });
+            return { error: true, status: 404, message: "The media does not exist anymore." };
         }
 
         // Default Error Fallback
-        return res.status(500).json({
-            success: false,
-            message: "Server error in processing vedio link."
-        });
+        return { error: true, status: 500, message: error.message || "Server error in processing video link." };
     }
 };

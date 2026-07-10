@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../axiosConfig";
 import toast from "react-hot-toast";
 import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,7 +29,7 @@ const Signup = () => {
     setLoading(true);
     try {
       // 🚨 TERA BACKEND ROUTE: Yahan Node.js se user ki email par OTP bhejna
-      const response = await axios.post("http://localhost:3000/api/user/send-otp", {
+      const response = await api.post("http://localhost:3000/api/user/send-otp", {
         email: formData.email,
         name: formData.name
       });
@@ -59,7 +59,7 @@ const Signup = () => {
     setLoading(true);
     try {
       // 🚨 TERA BACKEND ROUTE: Yahan OTP verify karke DB me save karna
-      const response = await axios.post("http://localhost:3000/api/user/signup", formData);
+      const response = await api.post("http://localhost:3000/api/user/signup", formData);
       
       if (response.data.success) {
         toast.success("Account verified & created successfully! 🎉");

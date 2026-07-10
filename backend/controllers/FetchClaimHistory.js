@@ -2,11 +2,11 @@ import { Factcheck } from "../models/ClaimHistory.js";
 
 export const FindtheClaims = async (req, res) => {
   try {
-    const Factarray = await Factcheck.find({})
+    const userId = req.user.userId;
+    const Factarray = await Factcheck.find({user:userId})
       .sort({isPinned:-1, createdAt: -1 })
       .limit(50)
-
-      
+  
     res.status(200).json({
       success: true,
       count: Factarray.length,
