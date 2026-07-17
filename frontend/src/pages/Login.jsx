@@ -20,7 +20,7 @@ const Login = () => {
       if (response.data.success) {
         toast.success("Welcome back! 🚀");
         localStorage.setItem("isAuthenticated", "true");
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error(error);

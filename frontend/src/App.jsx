@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route,Navigate } from 'react-router-dom';
 import { useEffect } from 'react'; 
 import api from './axiosConfig';   
 import Homepage from './pages/Homepage';
@@ -11,7 +11,7 @@ import ProtectedRoute from './components/ProtectedRoutes';
 
 const App = () => {
 
-  useEffect(() => {
+  useEffect(() => { 
     const verifySession = async () => {
       try {
          await api.get(`/api/user/check-auth?t=${new Date().getTime()}`); 
@@ -21,7 +21,7 @@ const App = () => {
           
           const currentPath = window.location.pathname;
           console.log(currentPath)
-          const publicPages = ["/login", "/signup", "/forgot-password"];
+          const publicPages = ["/login", "/signup", "/forgot-password","/"];
           
           // Agar user public page par NAHI hai, tabhi login par phekna hai
           if (!publicPages.includes(currentPath)) {
@@ -71,7 +71,7 @@ const App = () => {
 
       <div className='bg-black max-w-7xl mx-auto min-h-screen font-sans'>
         <Routes>
-          <Route path='/' element={
+          <Route path='/dashboard' element={
                <ProtectedRoute>
                   <Homepage/>
                </ProtectedRoute>
@@ -79,7 +79,7 @@ const App = () => {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/landing-page" element={<LandingPage/>}/>
+          <Route path="/" element={<LandingPage/>}/>
         </Routes>
       </div>
     </>

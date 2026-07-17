@@ -16,7 +16,7 @@ api.interceptors.response.use(
       const { code } = error.response.data;
       
       const currentPath = window.location.pathname;
-      const publicPages = ["/login", "/signup", "/forgot-password"];
+      const publicPages = ["/login", "/signup", "/forgot-password","/"];
 
       if (!publicPages.includes(currentPath)) {
         
@@ -29,7 +29,7 @@ api.interceptors.response.use(
             return api(originalRequest); 
             
           } catch (refreshError) {
-            toast.error("Session expired! Please login again.");
+            toast.error("Session expired! Please login again."); 
             localStorage.removeItem("isAuthenticated");
             window.location.href = "/login"; 
             
