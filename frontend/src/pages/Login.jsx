@@ -16,7 +16,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await api.post("http://localhost:3000/api/user/signin", formData);
+      const response = await api.post("/api/user/signin", formData);
       if (response.data.success) {
         toast.success("Welcome back! 🚀");
         localStorage.setItem("isAuthenticated", "true");

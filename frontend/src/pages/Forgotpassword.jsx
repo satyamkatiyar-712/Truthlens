@@ -30,7 +30,7 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const response = await api.post("http://localhost:3000/api/user/forgot-password-otp", {
+      const response = await api.post("/api/user/forgot-password-otp", {
         email: formData.email,
       });
       
@@ -64,7 +64,7 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const response = await api.post("http://localhost:3000/api/user/reset-password", {
+      const response = await api.post("/api/user/reset-password", {
         email: formData.email,
         otp: formData.otp,
         newPassword: formData.newPassword
