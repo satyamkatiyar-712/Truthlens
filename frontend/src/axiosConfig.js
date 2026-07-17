@@ -1,16 +1,17 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-
 const api = axios.create({
   baseURL: "http://localhost:3000",
   withCredentials: true, 
 });
 
-// Interceptor lagao
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+  
+    const originalRequest = error.config;
+
     if (error.response && error.response.status === 401) {
       const { code } = error.response.data;
       
@@ -19,16 +20,29 @@ api.interceptors.response.use(
 
       if (!publicPages.includes(currentPath)) {
         
-        if (code === "TOKEN_EXPIRED") {
-          toast.error("Session expired! Please login again.");
-          localStorage.removeItem("isAuthenticated");
+        if (code === "TOKEN_EXPIRED" && !originalRequest._retry) {
+          originalRequest._retry = true; 
+
+          try {
+            await api.post("api/user/refresh-token"); 
+            
+            return api(originalRequest); 
+            
+          } catch (refreshError) {
+            toast.error("Session expired! Please login again.");
+            localStorage.removeItem("isAuthenticated");
+            window.location.href = "/login"; 
+            
+            return Promise.reject(refreshError);
+          }
+        } 
+        
+        
+        else if (code === "NO_TOKEN" || code === "No_user") {
+          localStorage.removeItem("isAuthenticated"); 
           window.location.href = "/login";
-          
-        } else if (code === "NO_TOKEN") {
-          localStorage.removeItem("isAuthenticated"); // Safe side
-          window.location.href = "/login";
-          
-        } else {
+        } 
+        else {
           toast.error(error.response.data.message || "You don't have permission for this!");
         }
       }

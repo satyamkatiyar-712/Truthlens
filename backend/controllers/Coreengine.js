@@ -7,9 +7,17 @@ const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
 export const CoreEngine = async (Finalclaim, finalImagePart) => {
   try {
-    const today = new Date().toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-    });
+   const today = new Date().toLocaleString("en-IN", {
+  timeZone: "Asia/Kolkata",
+  weekday: "long",       
+  day: "numeric",     
+  month: "long",        
+  year: "numeric",       
+  hour: "2-digit",       
+  minute: "2-digit",     
+  hour12: true,          
+  timeZoneName: "short"  
+});
 
     const queryModel = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -46,7 +54,7 @@ STEP 2: THE "SEARCH FORCED" CHECK (USE SEARCH)
 ---------------------------
 Set needsSearch = true IMMEDIATELY if the query involves:
 - NEW viral claims, recent rumors, or trending WhatsApp forwards.
-- Current events, alive politicians/celebrities, active companies, or recent government policies.
+- RECENT ACTIONS OR QUOTES by politicians/celebrities (e.g., "Did Rahul Gandhi say this today?", "Elon musk new tweet").
 - Live data: Upcoming matches, elections, live stock prices, or current world records.
 - Claims requiring verification: "Is it banned?", "Did he die today?", "Is this video fake?".
 
@@ -56,11 +64,12 @@ STEP 3: THE "KNOWLEDGE BYPASS" RULE (DO NOT SEARCH)
 Set needsSearch = false AND provide a highly engaging directAnswer ONLY for:
 - CASUAL CHAT: Greetings and friendly talk ("Good morning bro", "Kaise ho").
 - LOGIC & CODE: Pure coding, math, or reasoning problems ("Write a React component", "2+2").
-- UNIVERSAL TRUTHS: Established geographical, biological, or scientific facts (e.g., "The sun rises in the east", "Snails sleep for 3 years").
-- ESTABLISHED HISTORY: Undisputed historical events and figures (e.g., "Who was Abraham Lincoln?", "When did WWII end?").
-- CLASSIC MEMES & POP CULTURE: Well-known internet jokes, classic movie props, or famous quotes that you already perfectly understand.
+- UNIVERSAL TRUTHS: Established geographical, biological, or scientific facts (e.g., "The sun rises in the east").
+- BASIC BIOGRAPHY & ENTITY INFO: Basic "Who is [Person]?" or "What is [Company]?" questions for well-known figures (living or dead). (e.g., "Rahul Gandhi kon hai?", "Who is Elon Musk?", "What is Google?"). If it is a simple encyclopedia question without a rumor/claim, use internal knowledge.
+- ESTABLISHED HISTORY: Undisputed historical events and figures (e.g., "Who was Abraham Lincoln?").
+- CLASSIC MEMES & POP CULTURE: Well-known internet jokes or classic movie info.
 
-🚨 GOLDEN RULE: If a user asks a basic historical fact or shares a classic known meme, DO NOT SEARCH. Give a brilliant directAnswer immediately. HOWEVER, if someone claims a *newly discovered* bizarre fact about a historical figure, then you must search.
+🚨 GOLDEN RULE: If a user asks a basic identity question ("Who is X", "What is Y"), DO NOT SEARCH. Give a brilliant directAnswer immediately. HOWEVER, if someone claims a *newly discovered* fact, rumor, or recent event about that person, then you MUST search.
 
 IMPORTANT: If there is 1% doubt, set needsSearch = true. NEVER guess facts.
 
@@ -124,8 +133,8 @@ Return ONLY 100% valid, parsable JSON.
 
     if (!needsSearch) {
       return {
-        verdict: "Chat",
-        confidenceScore: 100,
+        verdict: null,
+        confidenceScore: null,
         explanation: directAnswer,
         sources: [],
       };
@@ -344,9 +353,9 @@ Write the "explanation" field as a highly engaging, aesthetically pleasing, and 
 
 🌟 AESTHETIC & STRUCTURAL FORMATTING (CRITICAL FOR UI):
 - 🚫 NO LEADING SPACES: Start the explanation immediately with the very first word. Do NOT start with spaces, newlines (\\n), or asterisks.
-- 🌬️ BREATHABLE SPACING (CRITICAL): You MUST use DOUBLE newlines (\\n\\n) inside the JSON string to create distinct paragraphs. Never clump text together. Ensure there is plenty of breathing room between paragraphs, headings, and lists.
+- 🌬️ PARAGRAPH SPACING (CRITICAL): Har line ke beech 1-line ka normal gap (\\n) rakhein, aur har naye paragraph, heading ya list ke baad STRICTLY 2-line ka gap (DOUBLE NEWLINES \\n\\n) rakhein taaki clear spacing dikhe.
 - 🖋️ EXTRA BOLD HEADINGS: Use Markdown headings (e.g., ### **Heading Name**) to make section titles pop. Use **bold** for critical facts and source names.
-- 📋 LISTS & POINTS: If the user asks to "explain in points" or if you are breaking down multiple facts, you MUST use clean bulleted or numbered lists.
+- 📋 LISTS & POINTS: You MUST use clean NUMBERED lists (1., 2., 3.) for breaking down sources. STRICTLY DO NOT use bullet points (-) for the source breakdown section.
 - 📊 TABLES: If the user explicitly asks for a table, comparison, or if the data is best shown in a grid, generate a clean, properly formatted Markdown Table.
 - 🌟 EMOJIS: Use premium, context-aware emojis (🛑, ✅, 📰, 🕵️‍♂️, 💡, 🚨, 📉). Keep it classy.
 
@@ -354,11 +363,11 @@ You MUST structure your explanation EXACTLY like this (translate this structure 
 
 1. The Direct Punch: Start immediately with a conversational, direct response to the user's claim. (If Hinglish: "Nahi bro, ye galat hai 🛑". If Pure Hindi: "नहीं भाई, यह दावा बिल्कुल गलत है 🛑").\\n\\n
    
-### **🔍 Source-by-Source Breakdown**\\n\\n
-Break down the evidence clearly using the top 3-4 sources using bullet points.\\n\\n
-- 📰 **[Source Name 1]** reports that... 
-- 📰 **[Source Name 2]** confirms that... 
-- 📰 **[Source Name 3]** clarifies that...\\n\\n
+### **🔍 Source-by-Source Breakdown**\n\n
+Break down the evidence clearly using the top 3-4 sources. YOU MUST USE STRICT NUMBERING (1., 2., 3.). DO NOT USE BULLETS (-).\n\n
+1. 📰 **[Source Name 1]** reports that... 
+2. 📰 **[Source Name 2]** confirms that... 
+3. 📰 **[Source Name 3]** clarifies that...\n\n
 
 ### **💡 The Bottom Line**\\n\\n
 Wrap up smoothly. Explain exactly where the confusion started or summarize the absolute truth.

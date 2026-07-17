@@ -1,31 +1,92 @@
 import Searchbox from "./Searchbox";
 import ResultCard from "./ResultEXplanation";
-import { useState ,useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; 
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'; // 🚨 1. Sirf Lottie import add kiya
 
-const Wholerightsec = ({selectedHistoryItem,resetSignal,onSearchSuccess}) => {
+// 🚨 2. Premium messages ke liye chota function (Bahar rakha hai taaki tere main code ko na chhede)
+const FactLoadingMessages = () => {
+  const [index, setIndex] = useState(0);
+  const messages = [
+    "Extracting core claim...",
+    "Scanning global databases...",
+    "Cross-referencing sources...",
+    "Analyzing context...",
+    "Preparing final verdict..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % messages.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <p className="mt-1 ml-2 text-slate-400 text-xs font-medium tracking-widest animate-pulse uppercase">
+      {messages[index]}
+    </p>
+  );
+};
+
+const Wholerightsec = ({selectedHistoryItem, selectedHistoryId, resetSignal, onSearchSuccess}) => {
   const [loading, setLoading] = useState(false)
-  const [resultData, setResultData] = useState(null)
+  const [messagesList, setMessagesList] = useState([])
   const [mode, setMode] = useState("chat")
+  
+  const [tempUserClaim, setTempUserClaim] = useState("") 
+  const latestClaimRef = useRef("") 
+  const messagesEndRef = useRef(null)
+
+  // 🚨 CHANGED: Scroll logic ab smart ho gaya hai (Tera hi logic hai)
+  useEffect(() => {
+    // Agar naya claim type ho raha hai ya AI soch raha hai -> Smooth scroll
+    if (tempUserClaim || loading) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    } else {
+      // History kholne par -> Turant (Instant) scroll
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+    }
+  }, [messagesList, tempUserClaim, loading])
 
   useEffect(() => {
     if (selectedHistoryItem) {
-      setResultData({...selectedHistoryItem,isHistory:true});
+      const historyMessages = (selectedHistoryItem.messages || []).map(msg => ({
+        ...msg,
+        isHistory: true 
+      }));
+      setMessagesList(historyMessages);
       if (selectedHistoryItem.mode) setMode(selectedHistoryItem.mode);
     }
   }, [selectedHistoryItem])
 
   useEffect(() => {
     if (resetSignal > 0) {
-      setResultData(null)
+      setMessagesList([]) 
       setMode("chat")
+      setTempUserClaim("") 
+      latestClaimRef.current = "" 
     }
   }, [resetSignal])
+
+  const handleSearchStart = (text) => {
+    setTempUserClaim(text);
+    latestClaimRef.current = text; 
+  };
+
+  const handleReceiveNewData = (newData) => {
+    if (newData) {
+      // 🚨 FIX: Yahan se ref ko clear (empty) karne ka code hata diya hai taaki text gayab na ho
+      setMessagesList(prev => [...prev, { ...newData, userClaim: latestClaimRef.current }]);
+      setTempUserClaim(""); 
+    }
+  };
 
   return (
     <div className=" w-full h-screen flex-1 flex flex-col ">
       <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
-        <div className="max-w-3xl mx-auto space-y-6 pb-20 text-white">
-          {!resultData && !loading && (
+        <div className="max-w-3xl mx-auto space-y-6 pb-20 text-white relative">
+          
+          {messagesList.length === 0 && !loading && !tempUserClaim && (
             <>
               <div className="text-center mt-20 text-slate-400">
                 <h2 className="text-lg sm:text-xl font-bold text-slate-200 mb-2 text-center transition-all duration-300">
@@ -61,94 +122,71 @@ const Wholerightsec = ({selectedHistoryItem,resetSignal,onSearchSuccess}) => {
             </>
           )}
 
-          {loading && (
-            <div className="flex flex-col items-center justify-center w-full mt-32 animate-fade-in">
-              {mode === "chat" ? (
-                // ⚡ Fast Chat Mode Loading
-                <div className="flex flex-col items-center gap-6">
-                  <div className="relative flex items-center justify-center w-16 h-16">
-                    <div className="absolute inset-0 border-2 border-slate-800 rounded-full"></div>
-                    {/* Muted White/Silver Spinner */}
-                    <div className="absolute inset-0 border-r-2 border-b-2 border-slate-400 rounded-full animate-spin opacity-70 duration-1000"></div>
-                    {/* Muted Core */}
-                    <div className="w-4 h-4 bg-slate-300 rounded-full shadow-[0_0_12px_rgba(203,213,225,0.3)] animate-pulse z-10"></div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-end gap-1.5">
-                      <p className="text-lg font-bold tracking-[0.2em] uppercase text-slate-300">
-                        Thinking
-                      </p>
-                      <span className="flex gap-1 mb-1.5">
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></span>
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></span>
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></span>
-                      </span>
+          {/* PURANE MESSAGES */}
+          {messagesList.length > 0 && (
+            <div className="space-y-8">
+              {messagesList.map((msg, index) => (
+                <div key={index} className="flex flex-col space-y-4">
+                  {msg.userClaim && (
+                    <div className="flex justify-end">
+                      <div className="bg-[#2f2f2f] text-slate-100 px-5 py-3 text-sm md:text-base rounded-3xl max-w-[85%] shadow-sm whitespace-pre-wrap">
+                        {msg.userClaim}
+                      </div>
                     </div>
-                    <p className="text-slate-500 text-sm">
-                      Consulting the digital oracle...
-                    </p>
-                  </div>
+                  )}
+                  <ResultCard data={msg}  />
                 </div>
-              ) : (
-                
-                <div className="flex flex-col items-center gap-6">
-                  <div className="relative flex items-center justify-center w-16 h-16">
-                    <div className="absolute inset-0 border-2 border-slate-800 rounded-full"></div>
-
-                    <div className="absolute inset-0 rounded-full border-t-2 border-slate-400 animate-spin duration-700 shadow-[0_-3px_10px_rgba(203,213,225,0.2)]"></div>
-                    <div className="w-3 h-3 bg-slate-400/30 rounded-full animate-ping absolute"></div>
-                    <div className="w-2 h-2 bg-slate-400 rounded-full z-10"></div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-end gap-1.5">
-                      <p className="text-lg font-bold tracking-[0.2em] uppercase text-slate-300">
-                        Verifying
-                      </p>
-                      <span className="flex gap-1 mb-1.5">
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></span>
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></span>
-                        <span
-                          className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></span>
-                      </span>
-                    </div>
-                    <p className="text-slate-500 text-sm">
-                      Scanning sources for truth...
-                    </p>
-                  </div>
-                </div>
-              )}
+              ))}
             </div>
           )}
 
-          {resultData && !loading && <ResultCard data={resultData} />}
+          {/* TURANT BUBBLE AUR CHOTA LOADER */}
+          {loading && (
+            <div className={`flex flex-col space-y-4 ${messagesList.length === 0 ? 'mt-8' : 'mt-8'}`}>
+              
+              {tempUserClaim && (
+                <div className="flex justify-end animate-fade-in">
+                  <div className="bg-[#2f2f2f] text-slate-100 px-5 py-3 text-sm md:text-base rounded-3xl max-w-[85%] shadow-sm whitespace-pre-wrap">
+                    {tempUserClaim}
+                  </div>
+                </div>
+              )}
+
+              {/* 🚨 3. SIRF YAHI DIV CHANGE KIYA HAI (Purane spinner ko hatakar Lottie lagaya) */}
+              <div className="flex justify-start animate-fade-in pl-2">
+                <div className="flex flex-col items-start">
+                  <div className="w-20 h-20 -ml-2 -mt-2"> 
+                    <DotLottieReact
+                      src="https://lottie.host/1a93449f-6199-483c-ae56-9a20a07e1636/l5moj6frIA.lottie"
+                      loop
+                      autoplay
+                      style={{ filter: "brightness(0) invert(1)" }}
+                    />
+                  </div>
+                  {/* Custom messages sirf mode === "fact" me ayenge */}
+                  {mode === "fact" && <FactLoadingMessages />}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Invisible anchor target for scrolling */}
+          <div ref={messagesEndRef} className="h-1" />
+          
         </div>
       </div>
 
       <div className="shrink-0 p-4 bg-linear-to-t from-[#2f2f2f] via-[#161616] to-transparent">
         <div className="max-w-3xl mx-auto">
           <Searchbox
-            onReceiveData={setResultData}
+            onReceiveData={handleReceiveNewData} 
+            onSearchStart={handleSearchStart} 
             loading={loading}
             setLoading={setLoading}
             mode={mode}
             setMode={setMode}
+            selectedHistoryId={selectedHistoryId}
             onSearchSuccess={onSearchSuccess}
           />
         </div>

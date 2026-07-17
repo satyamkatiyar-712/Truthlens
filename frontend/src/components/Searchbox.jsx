@@ -7,7 +7,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import 'regenerator-runtime/runtime';
 import api from "../axiosConfig";
 
-const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearchSuccess }) => {
+const Searchbox = ({ onReceiveData,onSearchStart, loading, setLoading, mode, setMode , onSearchSuccess, selectedHistoryId }) => {
   const [claim, setClaim] = useState("");
   const [SelectedImage, setSelectedImage] = useState(null);
   const [PreviewUrl, setPreviewUrl] = useState(null);
@@ -47,21 +47,20 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
        SpeechRecognition.stopListening();
     }
     
-    // Toast 1: Clean English for empty input
     if (!claim && !SelectedImage){
        toast.error("Please enter a claim or attach an image first.");
        return;
     }
 
+    if(onSearchStart) onSearchStart(claim.trim() || "Image Attached");
+
     setLoading(true);
     onReceiveData(null);
     
-    // API Call se pehle variables save karo aur text ko trim karo (BUG FIXED HERE)
     const currentClaim = claim;
     const currentImage = SelectedImage;
     const currentClaimText = currentClaim.trim(); 
     
-    // UI clear karo
     setClaim("");
     setPreviewUrl(null);
     setSelectedImage(null);
@@ -70,9 +69,8 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
     const isAnyUrl = /^(https?:\/\/[^\s]+)/.test(currentClaimText);
     const isVideoLink = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be|instagram\.com)\/.+$/.test(currentClaimText);
     
-    // Toast 2: Professional English for invalid URLs
     if (isAnyUrl && !isVideoLink) {
-      setLoading(false); // Loading rokna zaroori hai agar return kar rahe hain
+      setLoading(false); 
       toast.error("Only YouTube or Instagram video links are supported.");
       return; 
     }
@@ -89,16 +87,25 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
       formdata.append("inputType", "text");   
     }
 
+    
+    if (selectedHistoryId) {
+      formdata.append("chatId", selectedHistoryId);
+    }
+
     try {
-     const response = await api.post("http://localhost:3000/api/user/verify", formdata);
+      // PRO TIP: baseUrl already axiosConfig mein hai, toh sirf route likho
+     const response = await api.post("/api/user/verify", formdata);
 
       const data = response.data;
 
       if (data.success) {
         onReceiveData(data.data);
-        if(onSearchSuccess) onSearchSuccess();
+        
+    
+        if(onSearchSuccess) {
+          onSearchSuccess(data.chatId); 
+        }
       } else {
-        // Backend ka message bhi gracefully handle hoga
         toast.error(data.message || "Verification failed. Please try again.");
       }
     } catch (error) {
@@ -114,10 +121,8 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
     }
   };
 
-  // Mic Button Function
   const handleMicClick = () => {
     if (!browserSupportsSpeechRecognition) {
-      // Toast 4: Converted the alert into a proper toast
       toast.error("Your browser doesn't support voice search. Please use Chrome or Edge.");
       return; 
     }
@@ -136,7 +141,6 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
     <div>
       <div className="w-full border border-gray-300 rounded-4xl shadow-sm focus-within:shadow-md transition-shadow duration-200 p-4 bg-white/10 backdrop-blur-lg">
         
-        {/* Top Section: Image Preview */}
         {PreviewUrl && (
           <div className="pb-0 relative inline-block">
             <div className="relative group">
@@ -155,7 +159,6 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
           </div>
         )}
 
-        {/* Middle Section: Text Area OR Listening UI */}
         {listening ? (
           <div className="w-full h-12 sm:h-10 max-h-40 flex items-center gap-3 overflow-hidden text-white bg-transparent px-2">
             <div className="flex items-center gap-1 h-full pt-1">
@@ -178,7 +181,6 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
           />
         )}
 
-        {/* Bottom Section: Toolbar */}
         <div className="flex items-center justify-between pt-1">
           <div className="flex space-x-2">
             <input
@@ -220,7 +222,6 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
               )}
             </div>
 
-            {/* Microphone Button */}
             <button
               onClick={handleMicClick}
               className={`p-2.5 rounded-full transition-all duration-300 flex items-center justify-center
@@ -232,7 +233,6 @@ const Searchbox = ({ onReceiveData, loading, setLoading, mode, setMode , onSearc
               <FaMicrophone size={18} />
             </button>
 
-            {/* Smart Send Button */}
             <div
               className={`transition-all duration-100 ease-out flex items-center justify-center overflow-hidden
                 ${hasInput && !loading 

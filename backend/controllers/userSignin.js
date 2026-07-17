@@ -15,7 +15,7 @@ export const forgotPasswordOtp = async (req, res) => {
         }
 
        
-        const user = await USER.findOne({ email });
+        const user = await USER.findOne({ email }); 
         if (!user) {
             return res.status(404).json({ success: false, message: "No account found with this email!" });
         }
@@ -24,7 +24,7 @@ export const forgotPasswordOtp = async (req, res) => {
         const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
        
-        await OTP.deleteMany({ email });
+        await OTP.deleteMany({ email }); 
         await OTP.create({ email, otp: generatedOtp });
 
        
@@ -227,7 +227,6 @@ export const LogoutUser = async (req, res) => {
 
 export const RenewAccesstoken = async (req, res) => {
      try {
-          // 🛠️ BUG 1 FIXED: Changed variable name to avoid shadowing the imported 'refreshToken' function
           const tokenFromCookie = req.cookies?.refreshToken;
 
           if (!tokenFromCookie) {
@@ -279,3 +278,29 @@ export const RenewAccesstoken = async (req, res) => {
           return res.status(500).json({ success: false, message: "Internal server error" });
      }
 };
+
+
+export const Profile= async(req,res)=>{
+        try{
+          const userId= req.user.userId;
+           const loginuser= await USER.findById(userId)
+           if(!loginuser){
+               return res.status(401).json({
+                    success:false,
+                    message:"Please login again to see your profile!",
+                    code: "No_user"
+               })
+           }
+           return res.status(200).json({
+                success:true,
+                user:{name:loginuser.name}
+           })
+        } 
+        catch(error){
+              console.log("Server error",error);
+              return res.status(500).json({ 
+                   success:false,
+                   message:"Server is not responding"
+              })
+        }
+}

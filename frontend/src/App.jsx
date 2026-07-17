@@ -5,6 +5,7 @@ import Homepage from './pages/Homepage';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 import ForgotPassword from './pages/Forgotpassword';
+import LandingPage from './pages/Landingpage';
 import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoutes';
 
@@ -68,7 +69,7 @@ const App = () => {
         }}
       />
 
-      <div className='bg-black max-w-7xl mx-auto min-h-screen'>
+      <div className='bg-black max-w-7xl mx-auto min-h-screen font-sans'>
         <Routes>
           <Route path='/' element={
                <ProtectedRoute>
@@ -78,6 +79,7 @@ const App = () => {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/landing-page" element={<LandingPage/>}/>
         </Routes>
       </div>
     </>

@@ -19,7 +19,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const [userData, setUserData] = useState({ name: "Loading...", email: "" });
+  const [userData, setUserData] = useState({ name: "User"});
   const navigate = useNavigate();
 
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -77,13 +77,16 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const res = await api.get("http://localhost:3000/api/user/profile");
+        const res = await api.get("/api/user/profile");
         const data = res.data;
         if (data.success && data.user) {
-          setUserData({ name: data.user.name, email: data.user.email });
+          setUserData({ name: data.user.name });
+        }else{
+          setUserData({ name: "User" });
         }
       } catch (err) {
         console.error("Profile fetch error:", err);
+        setUserData({ name: "User" });
       }
     };
     fetchUserProfile();
@@ -93,7 +96,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const result = await api.get("http://localhost:3000/api/user/claims");
+        const result = await api.get("/api/user/claims");
         const historyData = result.data;
         
         const sortedData = (historyData.data || []).sort((a, b) => {
@@ -115,7 +118,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   const handleDelete = async (id) => {
     setActiveMenuId(null); 
     try {
-      const response = await api.delete(`http://localhost:3000/api/user/claim/delete/${id}`);
+      const response = await api.delete(`/api/user/claim/delete/${id}`);
       const data = response.data;
       
       if (data.success) {
@@ -146,7 +149,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
     if (!renameText.trim()) return alert("Naam khali nahi chhod sakte!");
     
     try {
-      const response = await api.put(`http://localhost:3000/api/user/claim/update/${renameItemId}`, 
+      const response = await api.put(`/api/user/claim/update/${renameItemId}`, 
         { userClaim: renameText }
       );
       const data = response.data;
@@ -174,7 +177,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
   const handlePinToggle = async (id) => {
     setActiveMenuId(null); 
     try {
-      const response = await api.put(`http://localhost:3000/api/user/claim/pin/${id}`, 
+      const response = await api.put(`/api/user/claim/pin/${id}`, 
         {}, // Empty body
       );
       const data = response.data;
@@ -200,7 +203,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
 
   const handleLogout = async () => {
     try {
-      const res = await api.post("http://localhost:3000/api/user/logout", 
+      const res = await api.post("/api/user/logout", 
         {}
       );
       const data = res.data;
@@ -297,7 +300,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
                 >
                   <div className="flex-1 truncate text-white text-sm font-medium group-hover:text-slate-100 transition-colors flex items-center gap-2 capitalize">
                     {item.isPinned && <TbPinned className="text-white shrink-0" size={16} />}
-                    <span className="truncate">{item.userClaim || "Unknown Search"}</span>
+                    <span className="truncate">{item.title || "Unknown Search"}</span>
                   </div>
 
                   <button

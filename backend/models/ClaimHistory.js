@@ -1,5 +1,6 @@
-import mongoose from "mongoose"
-const ClaimSchema = new mongoose.Schema({
+import mongoose from "mongoose";
+
+const MessageSchema = new mongoose.Schema({
   userClaim: {
     type: String,
     required: true,
@@ -7,39 +8,49 @@ const ClaimSchema = new mongoose.Schema({
   },
   verdict: {
     type: String,
-    required: true,
-    enum: ["True", "False", "Misleading", "Chat", "Not Enough Evidence", "Not Yet Happened","Manipulated/Deepfake","Propaganda"]
+    enum: ["True", "False", "Misleading", "Chat", "Not Enough Evidence", "Not Yet Happened", "Manipulated/Deepfake", "Propaganda", null]
   },
   confidenceScore: {
     type: Number,
-    required: true,
     min: 0,
-    max: 100 
+    max: 100,
+    default: null 
   },
   explanation: {
     type: String,
     required: true
+  },
+  sources: [
+    {
+      name: String,
+      url: String
+    }
+  ],
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+
+const ChatSchema = new mongoose.Schema({
+  title: {
+    type: String, 
+    required: true,
+    trim: true
   },
   isPinned: {
     type: Boolean,
     default: false
   },
   user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "USER", // Ye naam tere User model ke naam se exactly match hona chahiye (jaise tune export const USER = mongoose.model("USER", ...))
-        required: true,
-    },
-  sources: [
-    {
-      name: String,
-      url: String
-    }
-  ]
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "USER", 
+    required: true,
+  },
+  messages: [MessageSchema] 
+}, {
+  timestamps: true 
+});
 
-},
-
-  {
-    timestamps: true
-  })
-
-export const Factcheck = mongoose.model("Factcheck", ClaimSchema)
+export const Factcheck = mongoose.model("Factcheck", ChatSchema);

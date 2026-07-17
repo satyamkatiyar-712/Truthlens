@@ -24,7 +24,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error(error);
-      const errorMsg = error.response?.data?.message || "Invalid credentials!";
+      const errorMsg = error.response?.data?.message || "Network error!";
       toast.error(errorMsg);
     } finally {
       setLoading(false);

@@ -17,6 +17,6 @@ export const FindtheClaims = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "the claims you searched before not available right now",
-    });
+    }); 
   }
 };
