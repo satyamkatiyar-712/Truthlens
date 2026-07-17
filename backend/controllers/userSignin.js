@@ -179,11 +179,13 @@ export const Loginuser = async (req, res) => {
           return res
                .cookie("accessToken", AccessToken, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === "production",
+                    secure: true,
+                    sameSite: "none"
                })
                .cookie("refreshToken", RefreshToken, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === "production",
+                    secure: true,
+                    sameSite: "none"
                })
                .status(200)
                .json({
@@ -262,11 +264,13 @@ export const RenewAccesstoken = async (req, res) => {
                // 🛠️ BUG 3 FIXED: Changed 'newAccesstoken' to 'AccessToken'
                .cookie("accessToken", AccessToken, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === "production",
+                    secure: true,
+                    sameSite: "none"
                })
                .cookie("refreshToken", RefreshToken, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === "production",
+                    secure: true,
+                    sameSite: "none"
                })
                .status(200)
                .json({
