@@ -9,7 +9,7 @@ const app = express();
 app.use(cookieParser());
 app.set('trust proxy', 1);
 app.use(cors({
-    origin: "http://localhost:5173", 
+    origin: ["http://localhost:5173", "https://truthlens-satad.vercel.app"],
     credentials: true 
 }));
 app.use(express.json());
