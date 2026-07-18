@@ -19,9 +19,10 @@ const Searchbox = ({ onReceiveData,onSearchStart, loading, setLoading, mode, set
     transcript,
     listening,
     resetTranscript,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable
   } = useSpeechRecognition();
-
+ 
   useEffect(() => {
     if (transcript) {
       setClaim(transcript);
@@ -122,10 +123,18 @@ const Searchbox = ({ onReceiveData,onSearchStart, loading, setLoading, mode, set
   };
 
   const handleMicClick = () => {
+
+    console.log("Browser Support:", browserSupportsSpeechRecognition, "Mic Available:", isMicrophoneAvailable);
+    
     if (!browserSupportsSpeechRecognition) {
       toast.error("Your browser doesn't support voice search. Please use Chrome or Edge.");
       return; 
     }
+
+    if (!isMicrophoneAvailable) {
+    toast.error("Microphone access denied! Please allow mic permissions in the address bar");
+    return;
+  }
 
     if (listening) {
       SpeechRecognition.stopListening();
@@ -215,9 +224,9 @@ const Searchbox = ({ onReceiveData,onSearchStart, loading, setLoading, mode, set
               </button>
 
               {showModeList && (
-                <div className="absolute bottom-full mb-2 right-0 sm:left-0 w-44 bg-white/10 border border-black/50 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in-up">
-                  <button onClick={() => { setMode("chat"); setShowModeList(false); }} className="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-white/30 hover:text-white transition-colors">Fast Chat</button>
-                  <button onClick={() => { setMode("fact"); setShowModeList(false); }} className="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-white/30 hover:text-white transition-colors border-t border-slate-700">Deep Fact-Check</button>
+                <div className="absolute bottom-full mb-2 right-0 sm:left-0 w-44 bg-[#464545] border border-black/50 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in-up">
+                  <button onClick={() => { setMode("chat"); setShowModeList(false); }} className="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:text-white transition-colors">Fast Chat</button>
+                  <button onClick={() => { setMode("fact"); setShowModeList(false); }} className="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:text-white transition-colors border-t border-slate-700">Deep Fact-Check</button>
                 </div>
               )}
             </div>

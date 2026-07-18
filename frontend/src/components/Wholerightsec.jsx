@@ -1,9 +1,9 @@
 import Searchbox from "./Searchbox";
 import ResultCard from "./ResultEXplanation";
 import { useState, useEffect, useRef } from "react"; 
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'; // 🚨 1. Sirf Lottie import add kiya
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
-// 🚨 2. Premium messages ke liye chota function (Bahar rakha hai taaki tere main code ko na chhede)
+
 const FactLoadingMessages = () => {
   const [index, setIndex] = useState(0);
   const messages = [
@@ -37,13 +37,15 @@ const Wholerightsec = ({selectedHistoryItem, selectedHistoryId, resetSignal, onS
   const latestClaimRef = useRef("") 
   const messagesEndRef = useRef(null)
 
-  // 🚨 CHANGED: Scroll logic ab smart ho gaya hai (Tera hi logic hai)
+
   useEffect(() => {
-    // Agar naya claim type ho raha hai ya AI soch raha hai -> Smooth scroll
+   
+    if (messagesList.length === 0 && !tempUserClaim && !loading) {
+      return; 
+    }
     if (tempUserClaim || loading) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     } else {
-      // History kholne par -> Turant (Instant) scroll
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
     }
   }, [messagesList, tempUserClaim, loading])
@@ -100,22 +102,20 @@ const Wholerightsec = ({selectedHistoryItem, selectedHistoryId, resetSignal, onS
                     : "Attach a screenshot or type a viral claim below to find the truth."}
                 </p>
               </div>
-              <div className="text-center mt-16">
-                <button className="py-3 px-5 bg-white/20 rounded-2xl backdrop-blur-lg mr-4 hover:bg-white/30 transform duration-200 ease-in-out">
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mt-12 sm:mt-16 max-w-2xl mx-auto px-4">
+                <button className="py-2.5 px-4 sm:py-3 sm:px-5 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 text-sm sm:text-base cursor-pointer">
                   {mode === "chat" ? "Build Roadmap" : "Bust Myth"}
                 </button>
-                <button className="py-3 px-5 bg-white/20 rounded-2xl backdrop-blur-lg mr-4  hover:bg-white/30 transform duration-200 ease-in-out">
+                <button className="py-2.5 px-4 sm:py-3 sm:px-5 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 text-sm sm:text-base cursor-pointer">
                   {mode === "chat" ? "Plan Routine" : "Verify Leak"}
                 </button>
-                <button className="py-3 px-5 bg-white/20 rounded-2xl backdrop-blur-lg  hover:bg-white/30 transform duration-200 ease-in-out">
+                <button className="py-2.5 px-4 sm:py-3 sm:px-5 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 text-sm sm:text-base cursor-pointer">
                   {mode === "chat" ? "Explain Simply" : "Spot Scam"}
                 </button>
-              </div>
-              <div className="text-center">
-                <button className="py-3 px-5 bg-white/20 rounded-2xl backdrop-blur-lg mr-4  hover:bg-white/30 transform duration-200 ease-in-out">
+                <button className="py-2.5 px-4 sm:py-3 sm:px-5 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 text-sm sm:text-base cursor-pointer">
                   {mode === "chat" ? "Debug Code" : "Real/Fake?"}
                 </button>
-                <button className="py-3 px-5 bg-white/20 rounded-2xl backdrop-blur-lg mr-4  hover:bg-white/30 transform duration-200 ease-in-out">
+                <button className="py-2.5 px-4 sm:py-3 sm:px-5 bg-white/10 border border-white/10 rounded-2xl backdrop-blur-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95 text-sm sm:text-base cursor-pointer">
                   {mode === "chat" ? "Write Email" : "Check History"}
                 </button>
               </div>

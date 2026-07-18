@@ -261,6 +261,9 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
           onClick={() => {
             onNewChat();
             setActiveMenuId(null);
+            if (typeof onCrossclick === 'function') {
+              onCrossclick(false);
+            }
           }}
           className="w-full flex items-center justify-between px-2 py-2.5  text-white text-sm font-medium rounded-xl hover:bg-[#303132]"
         >
@@ -296,6 +299,9 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
                   onClick={() => {
                     onSelectHistory(item);
                     setActiveMenuId(null);
+                    if (typeof onCrossclick === 'function') {
+                      onCrossclick(false);
+                    }
                   }}
                 >
                   <div className="flex-1 truncate text-white text-sm font-medium group-hover:text-slate-100 transition-colors flex items-center gap-2 capitalize">

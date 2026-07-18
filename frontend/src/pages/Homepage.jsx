@@ -37,15 +37,17 @@ const Homepage = () => {
 
   return (
     <div className="flex h-screen bg-black">
-      <div
-        className="text-white fixed top-4 left-4 md:hidden"
-        onClick={handleClaimHistoryBox}
-      >
-        <RxHamburgerMenu size={25} />
-      </div>
+      {!showHistory && (
+        <div
+          className="text-white fixed top-4 left-4 md:hidden z-100 cursor-pointer p-2 bg-black/30 backdrop-blur-sm rounded-lg hover:bg-black/50 transition-all"
+          onClick={handleClaimHistoryBox}
+        >
+          <RxHamburgerMenu size={25} />
+        </div>
+      )}
       
       <div className={`
-          fixed md:static top-0 left-0 h-full z-40
+          fixed md:static top-0 left-0 h-full z-120
           transform ${showHistory ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
           transition-transform duration-300
@@ -58,7 +60,14 @@ const Homepage = () => {
           refreshTrigger={refreshHistory} 
         />
       </div>
-      
+
+      {showHistory && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-110 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setshowHistory(false)}
+        />
+      )}
+
       <Wholerightsec
         selectedHistoryItem={selectedHistoryItem}
         selectedHistoryId={activeChatId}
