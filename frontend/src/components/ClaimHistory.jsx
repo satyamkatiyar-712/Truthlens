@@ -166,7 +166,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
         }
         setIsRenameModalOpen(false); 
       } else {
-        alert(data.message || "Rename fail ho gaya.");
+        alert(data.message || "Rename failed.");
       }
     } catch (error) {
       console.error("Rename error:", error);
@@ -343,7 +343,7 @@ const ClaimHistory = ({ onSelectHistory, onNewChat, onCrossclick, selectedHistor
               dropdownRef.current = node;
             }}
             style={{ top: finalMenuCoords.top, left: finalMenuCoords.left, position: "fixed" }}
-            className="fixed bg-[#303131] w-36 rounded-2xl py-2 px-3 z-50 shadow-2xl"
+            className="fixed bg-[#303131] w-36 rounded-2xl py-2 px-3 z-9999 shadow-2xl"
           >
             <div 
               onClick={() => handlePinToggle(activeMenuId)}

@@ -37,7 +37,17 @@ You must be extremely cautious: If a query involves real-world facts, claims, pe
 User's Input / Claim: "${Finalclaim}"
 
 ---------------------------
-STEP 1: CLASSIFY THE QUERY CATEGORY
+STEP 1: STRICT SCOPE & BOUNDARY (CRITICAL)
+---------------------------
+Truthlens is strictly a Fact-Checking, News Verification, and Debunking AI.
+- EXCEPTION (GREETINGS): If the user simply says "Hi", "Hello", "How are you", or normal casual greetings, DO NOT refuse. Respond back politely and ask how you can help them verify a fact today.
+- OUT-OF-SCOPE TASKS: If the user asks for OUT-OF-SCOPE tasks (e.g., "write code for me", "build a roadmap", "write an essay", "translate this", "solve this math equation", "plan my diet"), YOU MUST:
+- Set needsSearch = false.
+- Set directAnswer to a polite refusal mirroring the user's language (e.g., "Main sirf fact-checking aur claims verify karne ke liye banaya gaya hoon. Agar aapko kisi viral news, image, ya fact pe doubt hai toh mujhe bataiye! Main code likhne ya roadmap banane mein help nahi kar sakta.").
+- Categorize it appropriately (e.g., "coding") but DO NOT trigger search.
+
+---------------------------
+STEP 2: CLASSIFY THE QUERY CATEGORY
 ---------------------------
 Classify the input into one of these:
 - chat → casual talk, greetings (e.g., "Hi", "Kaise ho")
@@ -50,7 +60,7 @@ Classify the input into one of these:
 - general → real-world info that requires up-to-date accuracy
 
 ---------------------------
-STEP 2: THE "SEARCH FORCED" CHECK (USE SEARCH)
+STEP 3: THE "SEARCH FORCED" CHECK (USE SEARCH)
 ---------------------------
 Set needsSearch = true IMMEDIATELY if the query involves:
 - NEW viral claims, recent rumors, or trending WhatsApp forwards.
@@ -59,7 +69,7 @@ Set needsSearch = true IMMEDIATELY if the query involves:
 - Claims requiring verification: "Is it banned?", "Did he die today?", "Is this video fake?".
 
 ---------------------------
-STEP 3: THE "KNOWLEDGE BYPASS" RULE (DO NOT SEARCH)
+STEP 4: THE "KNOWLEDGE BYPASS" RULE (DO NOT SEARCH)
 ---------------------------
 Set needsSearch = false AND provide a highly engaging directAnswer ONLY for:
 - CASUAL CHAT: Greetings and friendly talk ("Good morning bro", "Kaise ho").
@@ -74,7 +84,7 @@ Set needsSearch = false AND provide a highly engaging directAnswer ONLY for:
 IMPORTANT: If there is 1% doubt, set needsSearch = true. NEVER guess facts.
 
 ---------------------------
-STEP 4: SMART QUERY GENERATION (CRITICAL)
+STEP 5: SMART QUERY GENERATION (CRITICAL)
 ---------------------------
 If needsSearch = true, generate optimal search queries.
 
@@ -92,7 +102,7 @@ Also set:
 - isRecent = true → ONLY if the user is asking about an event happening EXACTLY today or this week. Otherwise, false.
 
 ---------------------------
-STEP 5: LANGUAGE AND TONE MIRRORING
+STEP 6: LANGUAGE AND TONE MIRRORING
 ---------------------------
 When writing "directAnswer" (only if needsSearch is false):
 - Mirror the user's exact language (Hinglish, Hindi, or English).
@@ -101,7 +111,7 @@ When writing "directAnswer" (only if needsSearch is false):
 If needsSearch = true → directAnswer MUST be strictly null.
 
 ---------------------------
-STEP 6: STRICT JSON OUTPUT (CRITICAL)
+STEP 7: STRICT JSON OUTPUT (CRITICAL)
 ---------------------------
 Return ONLY 100% valid, parsable JSON. 
 🚨 FATAL ERROR PREVENTION:
@@ -123,13 +133,10 @@ Return ONLY 100% valid, parsable JSON.
 
     const rawAiOutput = queryResult.response.text();
 
-    console.log("🚨 RAW AI OUTPUT:\n", rawAiOutput);
-
     const searchQueryobject = JSON.parse(rawAiOutput);
 
     const { needsSearch, directAnswer, queries, isRecent } = searchQueryobject;
 
-    console.log(directAnswer);
 
     if (!needsSearch) {
       return {
@@ -163,7 +170,7 @@ Return ONLY 100% valid, parsable JSON.
 
     console.log("🧐 Critic Agent kachra filter kar raha hai...");
 
-    // Sabhi 9 results ko ek numbered list mein convert karte hain taaki AI easily padh sake
+   
     let rawResultsList = "";
     let allSnippets = [];
     let counter = 0;
@@ -176,7 +183,6 @@ Return ONLY 100% valid, parsable JSON.
       });
     });
 
-    console.log("📦 Tavily Raw Results (Before Critic):\n", rawResultsList);
 
     // Critic Agent ko bulate hain
     const criticModel = genAI.getGenerativeModel({
@@ -296,9 +302,6 @@ Return STRICTLY valid JSON in this format:
       }
     });
 
-    console.log(
-      `🗑️ Kachra safaya done! ${counter} mein se sirf ${goldLinksCount} best snippets final AI ko jayenge.`,
-    );
 
     if (goldLinksCount === 0) {
       return {
@@ -421,7 +424,6 @@ ${filteredSearchContext}
 
     const finallmResponse = JSON.parse(llmResponseText);
 
-    console.log("🎯 AI logic done. Verdict:", finallmResponse);
 
     return finallmResponse;
   } catch (error) {
