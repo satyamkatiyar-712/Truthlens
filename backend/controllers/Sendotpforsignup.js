@@ -2,13 +2,20 @@ import nodemailer from "nodemailer";
 
 export const sendOTPVerificationEmail = async (email, otp) => {
     try {
+        
         const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER, // Tera Gmail (e.g., satyam@gmail.com)
-                pass: process.env.EMAIL_PASS, // Gmail ka 16-digit App Password
-            },
-        });
+              host: "smtp.gmail.com",
+              port: 465, 
+              secure: true,
+              family: 4, 
+              auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+              },
+              tls: {
+                rejectUnauthorized: false,
+              },
+            });
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
