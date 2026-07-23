@@ -1,20 +1,25 @@
 import nodemailer from "nodemailer";
 
 export const sendPasswordResetEmail = async (email, otp) => {
-    try {
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465, 
+      secure: true, 
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
 
-        const mailOptions = {
-            from: `"Truthlens Support" <${process.env.EMAIL_USER}>`, // Custom naam dikhega inbox me
-            to: email,
-            subject: "🔒 Reset Your Truthlens Password",
-            html: `
+    const mailOptions = {
+      from: `"Truthlens Support" <${process.env.EMAIL_USER}>`, // Custom naam dikhega inbox me
+      to: email,
+      subject: "🔒 Reset Your Truthlens Password",
+      html: `
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-w-md; margin: auto; padding: 30px; border-radius: 12px; background-color: #0a0a0a; color: #e5e7eb; border: 1px solid #262626; text-align: center;">
                     <h2 style="color: #ffffff; margin-bottom: 10px;">Truthlens</h2>
                     <p style="font-size: 16px; color: #a3a3a3;">We received a request to reset your password.</p>
@@ -28,12 +33,12 @@ export const sendPasswordResetEmail = async (email, otp) => {
                     <p style="font-size: 12px; color: #525252; margin-top: 30px;">If you didn't request a password reset, you can safely ignore this email. Your account is secure.</p>
                 </div>
             `,
-        };
+    };
 
-        await transporter.sendMail(mailOptions);
-        console.log("Password Reset Email sent successfully to:", email);
-    } catch (error) {
-        console.error("Password Reset Email sending failed:", error);
-        throw new Error("Could not send email");
-    }
+    await transporter.sendMail(mailOptions);
+    console.log("Password Reset Email sent successfully to:", email);
+  } catch (error) {
+    console.error("Password Reset Email sending failed:", error);
+    throw new Error("Could not send email");
+  }
 };
