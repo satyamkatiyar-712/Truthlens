@@ -1,24 +1,12 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+// Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPVerificationEmail = async (email, otp) => {
     try {
-        
-        const transporter = nodemailer.createTransport({
-              host: "smtp.gmail.com",
-              port: 465, 
-              secure: true,
-              family: 4, 
-              auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-              },
-              tls: {
-                rejectUnauthorized: false,
-              },
-            });
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
+        await resend.emails.send({
+            from: "Acme <onboarding@resend.dev>", 
             to: email,
             subject: "Verify Your Truthlens Account",
             html: `
@@ -29,9 +17,8 @@ export const sendOTPVerificationEmail = async (email, otp) => {
                     <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>
                 </div>
             `,
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
         console.log("Email sent successfully to:", email);
     } catch (error) {
         console.error("Email sending failed:", error);

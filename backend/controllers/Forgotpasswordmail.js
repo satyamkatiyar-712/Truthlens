@@ -1,23 +1,12 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+// Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendPasswordResetEmail = async (email, otp) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465, 
-      secure: true,
-      family: 4, 
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    const mailOptions = {
-      from: `"Truthlens Support" <${process.env.EMAIL_USER}>`, // Custom naam dikhega inbox me
+    await resend.emails.send({
+      from: "Acme <onboarding@resend.dev>", 
       to: email,
       subject: "🔒 Reset Your Truthlens Password",
       html: `
@@ -34,9 +23,8 @@ export const sendPasswordResetEmail = async (email, otp) => {
                     <p style="font-size: 12px; color: #525252; margin-top: 30px;">If you didn't request a password reset, you can safely ignore this email. Your account is secure.</p>
                 </div>
             `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
     console.log("Password Reset Email sent successfully to:", email);
   } catch (error) {
     console.error("Password Reset Email sending failed:", error);
